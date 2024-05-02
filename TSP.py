@@ -7,13 +7,35 @@ from geopy.distance import geodesic
 import random
 import math
 import time
+import altair as alt
+from math import radians, sin, cos, sqrt, atan2, log
+
+def SampleData():
+    st.session_state.points.append((32.37, -86.30)) # Montgomery
+    #st.session_state.points.append((58.30, -134.42)) # Juneau
+    st.session_state.points.append((33.44, -112.09)) # Phoenix
+    st.session_state.points.append((34.74, -92.29)) # Little Rock
+    st.session_state.points.append((38.57, -121.49)) # Sacramento
+    st.session_state.points.append((39.74, -104.98)) # Denver
+    st.session_state.points.append((41.76, -72.68)) # Hartford
+    st.session_state.points.append((39.15, -75.52)) # Dover
+    #st.session_state.points.append((21.30, -157.86)) # Honolulu
+    st.session_state.points.append((30.44, -84.28)) # Tallahassee
+    st.session_state.points.append((33.74, -84.39)) # Atlanta
+    st.session_state.points.append((43.61, -116.20)) # Boise
+    st.session_state.points.append((39.79, -89.65)) # Springfield
+    st.session_state.points.append((39.76, -86.16)) # Indianapolis
+    st.session_state.points.append((41.59, -93.60)) # Des Moines
+    st.session_state.points.append((39.04, -95.67)) # Topeka
+    st.session_state.points.append((38.18, -84.87)) # Frankfort
+    st.session_state.points.append((30.45, -91.18)) # Baton Rouge 
 
 def add_custom_css():
     custom_css = """
     <style>
         /* Main content and sidebar background image */
         .main .block-container, .main .sidebar .block-container {
-            background-image: url('https://img.reintech.io/ciihx7nnvn4qjyx75vni26rhbjlz');  /* URL to the background image */
+            background-image: url('https://www.solidbackgrounds.com/images/1920x1080/1920x1080-light-blue-solid-color-background.jpg');  /* URL to the background image */
             background-size: cover;  /* Cover the entire space */
             background-repeat: no-repeat;  /* Do not repeat the image */
             background-position: center;  /* Center the background image */
@@ -48,62 +70,23 @@ def add_custom_css():
         .stTextInput>input, .stNumberInput>input {
             border: 2px solid #4CAF50; /* Green */
         }
+        
+        /* Styling for table */
+        .dataframe {
+            font-size: 14px;
+            text-align: center;
+        }
+        th {
+            background-color: #4CAF50; /* Green */
+            color: white;
+            font-weight: bold;
+        }
+        td {
+            background-color: #f2f2f2; /* Light Grey */
+        }
     </style>
     """
     st.markdown(custom_css, unsafe_allow_html=True)
-
-def SampleData():
-    st.session_state.points.append((32.37, -86.30)) # Montgomery
-    #st.session_state.points.append((58.30, -134.42)) # Juneau
-    st.session_state.points.append((33.44, -112.09)) # Phoenix
-    st.session_state.points.append((34.74, -92.29)) # Little Rock
-    st.session_state.points.append((38.57, -121.49)) # Sacramento
-    st.session_state.points.append((39.74, -104.98)) # Denver
-    st.session_state.points.append((41.76, -72.68)) # Hartford
-    st.session_state.points.append((39.15, -75.52)) # Dover
-    #st.session_state.points.append((21.30, -157.86)) # Honolulu
-    st.session_state.points.append((30.44, -84.28)) # Tallahassee
-    st.session_state.points.append((33.74, -84.39)) # Atlanta
-    st.session_state.points.append((43.61, -116.20)) # Boise
-    st.session_state.points.append((39.79, -89.65)) # Springfield
-    st.session_state.points.append((39.76, -86.16)) # Indianapolis
-    st.session_state.points.append((41.59, -93.60)) # Des Moines
-    st.session_state.points.append((39.04, -95.67)) # Topeka
-    st.session_state.points.append((38.18, -84.87)) # Frankfort
-    st.session_state.points.append((30.45, -91.18)) # Baton Rouge
-    st.session_state.points.append((44.30, -69.78)) # Augusta
-    st.session_state.points.append((38.97, -76.49)) # Annapolis
-    st.session_state.points.append((42.35, -71.06)) # Boston
-    st.session_state.points.append((42.73, -84.55)) # Lansing
-    st.session_state.points.append((44.95, -93.10)) # St. Paul
-    st.session_state.points.append((32.30, -90.18)) # Jackson
-    st.session_state.points.append((38.57, -92.17)) # Jefferson City
-    st.session_state.points.append((46.58, -112.01)) # Helena
-    st.session_state.points.append((40.80, -96.69)) # Lincoln
-    st.session_state.points.append((39.16, -119.76)) # Carson City
-    st.session_state.points.append((43.20, -71.53)) # Concord
-    st.session_state.points.append((40.22, -74.77)) # Trenton
-    st.session_state.points.append((35.68, -105.94)) # Santa Fe
-    st.session_state.points.append((35.78, -78.64)) # Raleigh
-    st.session_state.points.append((46.82, -100.78)) # Bismark
-    st.session_state.points.append((42.65, -73.75)) # Albany
-    st.session_state.points.append((39.96, -83.00)) # Columbus
-    st.session_state.points.append((35.49, -97.50)) # Oklahoma City
-    st.session_state.points.append((44.94, -123.03)) # Salem
-    st.session_state.points.append((40.26, -76.88)) # Harrisburg
-    st.session_state.points.append((41.83, -71.41)) # Providence
-    st.session_state.points.append((34.00, -81.03)) # Columbia
-    st.session_state.points.append((44.36, -100.34)) # Pierre
-    st.session_state.points.append((36.16, -86.78)) # Nashville
-    st.session_state.points.append((30.27, -97.74)) # Austin
-    st.session_state.points.append((40.77, -111.89)) # Salt Lake City
-    st.session_state.points.append((44.26, -72.58)) # Montpelier
-    st.session_state.points.append((37.54, -77.43)) # Richmond
-    st.session_state.points.append((47.03, -122.90)) # Olympia
-    st.session_state.points.append((38.33, -81.61)) # Charleston
-    st.session_state.points.append((43.07, -89.38)) # Madison
-    st.session_state.points.append((41.14, -104.82)) # Cheyenne
-    return
 
 
 # Function to calculate the distance between two points using geopy
@@ -222,10 +205,6 @@ def genetic_algorithm(points, population_size=50, generations=100, mutation_rate
     best_individual.append(best_individual[0])  # Close the loop
     return best_individual
 
-# Supporting functions such as calculate_distance should be defined appropriately.
-
-
-# Function to solve the TSP using the simulated annealing algorithm
 def two_opt(solution):
     """ Apply a 2-opt optimization on the provided solution """
     improved = True
@@ -238,6 +217,7 @@ def two_opt(solution):
                     improved = True
     return solution
 
+# Function to solve the TSP using the simulated annealing algorithm
 def simulated_annealing_algorithm(points, iterations=10000, apply_two_opt_every=1000):
     if len(points) < 2:  # Check for enough points
         return points
@@ -276,65 +256,34 @@ def simulated_annealing_algorithm(points, iterations=10000, apply_two_opt_every=
     return current_solution + [current_solution[0]]  # ensure to close the loop
 
 # Function to add markers and draw path on the map
-def add_markers_and_path(map_object, points, path):
+def add_markers_and_path(map_object, points, path, optimized_points=[]):
+    # Add markers to the map
     for point in points:
+        popup_html = f"<div style='color: black; font-size: 12px;'>{point}</div>"
+        popup = folium.Popup(popup_html, max_width=300)  # Black color for general points
         folium.Marker(
             location=[point[0], point[1]],
-            popup=f'({point[0]}, {point[1]})'
+            popup=popup,
+            icon=folium.Icon(color='blue', icon='info-sign')
         ).add_to(map_object)
+    
+    # Highlight optimized points in a different color
+    for point in optimized_points:
+        popup_html = f"<div style='color: darkgreen; font-size: 12px;'>{point}</div>"  # Dark green color for optimized points
+        popup = folium.Popup(popup_html, max_width=300)
+        folium.Marker(
+            location=[point[0], point[1]],
+            popup=popup,
+            icon=folium.Icon(color='green', icon='ok-sign')
+        ).add_to(map_object)
+
     # Draw the path if available
     if path:
         folium.PolyLine(path, color='blue', weight=5, opacity=0.7).add_to(map_object)
 
-def center_map_on_points(points):
-    latitudes = [p[0] for p in points]
-    longitudes = [p[1] for p in points]
-    center_lat = sum(latitudes) / len(latitudes)
-    center_lon = sum(longitudes) / len(longitudes)
-    return center_lat, center_lon
-
-def calculate_zoom_level(points):
-    if not points:
-        return 10  # default zoom level if no points
-
-    latitudes = [point[0] for point in points]
-    longitudes = [point[1] for point in points]
-
-    max_lat = max(latitudes)
-    min_lat = min(latitudes)
-    max_lon = max(longitudes)
-    min_lon = min(longitudes)
-
-    # Latitude and longitude spans
-    lat_span = max_lat - min_lat
-    lon_span = max_lon - min_lon
-
-    # A simple heuristic to calculate zoom level based on span
-    max_span = max(lat_span, lon_span)
-    if max_span < 0.01:
-        return 13
-    elif max_span < 0.02:
-        return 12
-    elif max_span < 0.05:
-        return 11
-    elif max_span < 0.1:
-        return 10
-    elif max_span < 0.2:
-        return 9
-    elif max_span < 0.5:
-        return 8
-    elif max_span < 1:
-        return 7
-    elif max_span < 2:
-        return 6
-    elif max_span < 5:
-        return 5
-    else:
-        return 4
-
 # Streamlit app
 def app():
-    #add_custom_css()
+    add_custom_css()
     st.title('Traveling Salesperson Problem Solver')
 
     # Initialize or update the session state for points
@@ -343,6 +292,7 @@ def app():
 
     # Form for adding new markers
     with st.form("points_input_add"):
+        st.write("## Input")
         lat = st.number_input('Latitude', value=33.8704, format="%.4f")
         lon = st.number_input('Longitude', value=-117.9242, format="%.4f")
         submitted = st.form_submit_button('Add Marker')
@@ -354,15 +304,29 @@ def app():
             else:
                 st.warning("This point is already added.")
 
-    if st.checkbox('Sample Travelling Salesperson Points: Capitals'):
+    # Sample data button
+    if st.button("Use Sample Data"):
         SampleData()
 
     # Display map with current markers
-    central_lat, central_lon = center_map_on_points(st.session_state.points)
-    zoom_level = calculate_zoom_level(st.session_state.points)
-    m = folium.Map(location=[central_lat, central_lon], zoom_start=zoom_level, tiles='OpenStreetMap')
-    add_markers_and_path(m, st.session_state.points, [])
-    folium_static(m)
+    if st.session_state.points:
+        min_lat = min(p[0] for p in st.session_state.points)
+        max_lat = max(p[0] for p in st.session_state.points)
+        min_lon = min(p[1] for p in st.session_state.points)
+        max_lon = max(p[1] for p in st.session_state.points)
+
+        # Calculate the center and zoom level to fit all points
+        center_lat = (min_lat + max_lat) / 2
+        center_lon = (min_lon + max_lon) / 2
+        zoom_level = calculate_zoom(min_lat, max_lat, min_lon, max_lon)
+
+        m = folium.Map(location=[center_lat, center_lon], zoom_start=zoom_level, tiles='OpenStreetMap')
+        add_markers_and_path(m, st.session_state.points, [])
+        st.write("### Map")
+        folium_static(m)
+    else:
+        st.write("### Map")
+        st.write("No points added yet.")
 
     # Checkboxes for TSP algorithms
     tsp_algorithms = {
@@ -397,18 +361,12 @@ def app():
                     best_route = route
                     best_algorithm = algorithm
 
-                st.write(f"Optimized Delivery Route ({algorithm}):")
-                st.write(f"Total Distance: {total_distance} kilometers")
-                for idx, loc in enumerate(route):
-                    st.write(f"{idx+1}: {loc}")
-
                 # Re-draw the map with the route
-                central_lat, central_lon = center_map_on_points(st.session_state.points)
-                zoom_level = calculate_zoom_level(st.session_state.points)
-                m = folium.Map(location=[central_lat, central_lon], zoom_start=zoom_level, tiles='OpenStreetMap')
+                m = folium.Map(location=[center_lat, center_lon], zoom_start=zoom_level, tiles='OpenStreetMap')
                 add_markers_and_path(m, st.session_state.points, route)
+                st.write(f"### Map - {algorithm}")
                 folium_static(m)
-            
+
             # Print the best route and its total distance
             st.write(f"Best Optimized Delivery Route ({best_algorithm}):")
             for idx, loc in enumerate(best_route):
@@ -417,19 +375,45 @@ def app():
             total_distance_best += calculate_distance(best_route[-1], best_route[0])  # add distance from last point back to the start
             st.write(f"Total Distance: {total_distance_best} kilometers")
 
-            # Re-draw the map with the best route
-            central_lat, central_lon = center_map_on_points(st.session_state.points)
-            zoom_level = calculate_zoom_level(st.session_state.points)
-            m = folium.Map(location=[central_lat, central_lon], zoom_start=zoom_level, tiles='OpenStreetMap')
-            add_markers_and_path(m, st.session_state.points, best_route)
-            folium_static(m)
-            
-            # Bar graph for execution times
-            if selected_algorithms:
-            # Use pandas DataFrame to create a bar chart
-                execution_time_df = pd.DataFrame(list(execution_times.items()), columns=['Algorithm', 'Execution Time (s)'])
-                st.subheader("Execution Times of TSP Algorithms")
-                st.bar_chart(execution_time_df.set_index('Algorithm'))
+            # Table for routes of all algorithms
+            st.subheader("Optimized Delivery Routes")
+            route_data = {"Algorithm": [], "Total Distance (km)": [], "Route": []}
+            for alg, route in routes.items():
+                total_distance = sum(calculate_distance(route[i], route[i+1]) for i in range(len(route)-1))
+                total_distance += calculate_distance(route[-1], route[0])  # add distance from last point back to the start
+                route_data["Algorithm"].append(alg)
+                route_data["Total Distance (km)"].append(total_distance)
+                route_data["Route"].append(route)
+            route_df = pd.DataFrame(route_data)
+            route_df.set_index('Algorithm', inplace=True)
+            route_df = route_df.style.set_table_styles([
+                {'selector': 'th', 'props': [('background-color', '#4CAF50'), ('color', 'white'), ('font-weight', 'bold')]},
+                {'selector': 'td', 'props': [('background-color', '#f2f2f2'), ('text-align', 'center')]},
+            ])
+            st.write(route_df)
+
+            # Line plot for execution times
+            st.subheader("Execution Times of TSP Algorithms")
+            execution_df = pd.DataFrame(execution_times.items(), columns=['Algorithm', 'Execution Time (s)'])
+            chart = alt.Chart(execution_df).mark_line(point=True).encode(
+                x='Algorithm',
+                y='Execution Time (s)',
+                tooltip=['Algorithm', 'Execution Time (s)']
+            ).properties(
+                width=600,
+                height=400
+            )
+            st.altair_chart(chart)
+
+            # Distance matrices
+            st.subheader("Distance Matrices")
+            for alg, route in routes.items():
+                st.write(f"Distance Matrix for {alg}:")
+                dist_matrix = pd.DataFrame(np.zeros((len(route), len(route))), index=range(1, len(route) + 1), columns=range(1, len(route) + 1))
+                for i in range(len(route)):
+                    for j in range(len(route)):
+                        dist_matrix.iloc[i, j] = calculate_distance(route[i], route[j])
+                st.write(dist_matrix)
 
         else:
             st.error("Please add at least two locations and select at least one algorithm.")
@@ -437,11 +421,22 @@ def app():
     # Refresh map and clear session state
     if st.button('Refresh Map'):
         st.session_state.points = []
-        central_lat, central_lon = calculate_zoom_level(st.session_state.points)
-        zoom_level = calculate_zoom_level(st.session_state.points)
-        m = folium.Map(location=[central_lat, central_lon], zoom_start=zoom_level, tiles='OpenStreetMap')
+        m = folium.Map(location=[33.8704, -117.9242], zoom_start=13, tiles='OpenStreetMap')
         folium_static(m)
+
+def calculate_zoom(min_lat, max_lat, min_lon, max_lon):
+    zoom_level = 12  # A default value
+    # Source: https://wiki.openstreetmap.org/wiki/Zoom_levels
+    # Using this formula to calculate the zoom level based on the given latitude and longitude range
+    lat_difference = max_lat - min_lat
+    lon_difference = max_lon - min_lon
+    if lat_difference == 0 and lon_difference == 0:
+        zoom_level = 14
+    elif lat_difference > lon_difference:
+        zoom_level = round(log(360 * 0.3 / lat_difference) / log(2))
+    else:
+        zoom_level = round(log(360 * 0.3 / lon_difference) / log(2))
+    return zoom_level
 
 if __name__ == "__main__":
     app()
-
