@@ -13,6 +13,7 @@ This Streamlit application visualizes and computes optimized routes using the Tr
 - Custom CSS for enhanced UI
 - Option to load sample data or input new data dynamically
 
+   ```
 ## Installation
 
 To run this application, you will need Python installed on your system, along with several libraries. Here's how you can set it up:
@@ -20,8 +21,8 @@ To run this application, you will need Python installed on your system, along wi
 1. Clone the repository:
    
    git clone https://github.com/SumitRodrigues/TSP-Algo.git
-   cd your-repository-name
-   ```
+   cd TSP-Algo
+
 
 2. Install the required packages:
    ```bash
