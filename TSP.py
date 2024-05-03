@@ -221,7 +221,7 @@ def genetic_algorithm(points, population_size=50, generations=100, mutation_rate
 
         # Early stopping condition
         if no_improvement_count >= patience:
-            print(f"Stopping early at generation {generation} due to lack of significant improvement.")
+            st.write(f"Stopping early at generation {generation} due to lack of significant improvement.")
             break
     
     best_individual = two_opt(best_individual)  # Assuming two_opt is defined
