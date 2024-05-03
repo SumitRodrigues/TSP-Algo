@@ -364,19 +364,16 @@ def app():
             best_algorithm = None
             min_distance = float('inf')
             for algorithm in selected_algorithms:
-                start_time = time.time()
                 route = tsp_algorithms[algorithm](st.session_state.points)
-                end_time = time.time()
-                execution_time = end_time - start_time
-                execution_times[algorithm] = execution_time
-                routes[algorithm] = route
-
+                # Here you add city names to your route display
+                route_with_names = [(city_names.get(loc, "Unknown"), loc) for loc in route]
+                # Calculate distances and check for the best route as before
                 total_distance = sum(calculate_distance(route[i], route[i+1]) for i in range(len(route)-1))
-                total_distance += calculate_distance(route[-1], route[0])  # add distance from last point back to the start
+                total_distance += calculate_distance(route[-1], route[0])
                 
                 if total_distance < min_distance:
                     min_distance = total_distance
-                    best_route = route
+                    best_route = route_with_names  # Use route with names
                     best_algorithm = algorithm
 
                 # Re-draw the map with the route
@@ -386,12 +383,14 @@ def app():
                 folium_static(m)
 
             # Print the best route and its total distance
-            st.write(f"Best Optimized Delivery Route ({best_algorithm}):")
-            for idx, loc in enumerate(best_route):
-                st.write(f"{idx+1}: {loc}")
-            total_distance_best = sum(calculate_distance(best_route[i], best_route[i+1]) for i in range(len(best_route)-1))
-            total_distance_best += calculate_distance(best_route[-1], best_route[0])  # add distance from last point back to the start
-            st.write(f"Total Distance: {total_distance_best} kilometers")
+            if best_route:
+                st.write(f"Best Optimized Delivery Route ({best_algorithm}):")
+                for idx, (name, loc) in enumerate(best_route):
+                    st.write(f"{idx+1}: {name} {loc}")
+                # Ensure that only the location part of the tuple is passed for distance calculation
+                total_distance_best = sum(calculate_distance(best_route[i][1], best_route[i+1][1]) for i in range(len(best_route)-1))
+                total_distance_best += calculate_distance(best_route[-1][1], best_route[0][1])  # close the loop
+                st.write(f"Total Distance: {total_distance_best} kilometers")
 
             # Table for routes of all algorithms
             st.subheader("Optimized Delivery Routes")
