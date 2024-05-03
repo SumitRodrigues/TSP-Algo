@@ -56,7 +56,7 @@ These algorithms offer a blend of exact, approximate, and heuristic methods, all
 
 ## Customization
 
-You can modify the `city_names` dictionary in the `app.py` file to include other cities or change the existing ones. Additionally, the styling can be adjusted via the CSS in the `add_custom_css` function.
+You can modify the `city_names` dictionary in the `TSP.py` file to include other cities or change the existing ones. Additionally, the styling can be adjusted via the CSS in the `add_custom_css` function.
 
 ## Contributing
 
