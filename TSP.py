@@ -7,27 +7,11 @@ from geopy.distance import geodesic
 import random
 import math
 import time
-import altair as alt
-from math import radians, sin, cos, sqrt, atan2, log
+from math import log
+import networkx as nx
+from itertools import combinations
+import matplotlib.pyplot as plt
 
-city_names = {
-    (32.37, -86.30): "Montgomery, AL",
-    (33.44, -112.09): "Phoenix, AZ",
-    (34.74, -92.29): "Little Rock, AR",
-    (38.57, -121.49): "Sacramento, CA",
-    (39.74, -104.98): "Denver, CO",
-    (41.76, -72.68): "Hartford, CT",
-    (39.15, -75.52): "Dover, DE",
-    (30.44, -84.28): "Tallahassee, FL",
-    (33.74, -84.39): "Atlanta, GA",
-    (43.61, -116.20): "Boise, ID",
-    (39.79, -89.65): "Springfield, IL",
-    (39.76, -86.16): "Indianapolis, IN",
-    (41.59, -93.60): "Des Moines, IA",
-    (39.04, -95.67): "Topeka, KS",
-    (38.18, -84.87): "Frankfort, KY",
-    (30.45, -91.18): "Baton Rouge, LA"
-}
 def SampleData():
     st.session_state.points.append((32.37, -86.30)) # Montgomery
     #st.session_state.points.append((58.30, -134.42)) # Juneau
@@ -135,7 +119,7 @@ def random_sampling_algorithm(points):
 
     shortest_path = []
     min_distance = float('inf')
-    num_samples = min(1000, len(points)**2)  # Limit the number of samples to avoid excessive computation
+    num_samples = min(2000, len(points)**2)  # Limit the number of samples to avoid excessive computation
 
     for _ in range(num_samples):
         sample_path = random.sample(points, len(points))
@@ -149,7 +133,10 @@ def random_sampling_algorithm(points):
     return shortest_path
 
 # Function to solve the TSP using genetic algorithm
-def genetic_algorithm(points, population_size=50, generations=100, mutation_rate=0.1, tournament_size=5):
+import random
+
+def genetic_algorithm(points, population_size=50, generations=100, mutation_rate=0.1, tournament_size=5, patience=10, threshold=1e-4):
+    # Assumes calculate_distance and other dependent functions are defined elsewhere
     def create_greedy_individual(points):
         start = random.choice(points)
         unvisited = set(points)
@@ -204,8 +191,11 @@ def genetic_algorithm(points, population_size=50, generations=100, mutation_rate
     
     population = [create_greedy_individual(points) for _ in range(population_size)]
     best_individual = min(population, key=fitness)
+    best_fitness = fitness(best_individual)
     
-    for _ in range(generations):
+    no_improvement_count = 0
+
+    for generation in range(generations):
         new_population = []
         for _ in range(population_size):
             parent1 = tournament_selection(population, tournament_size)
@@ -216,10 +206,25 @@ def genetic_algorithm(points, population_size=50, generations=100, mutation_rate
             new_population.append(child)
         population = new_population
         current_best = min(population, key=fitness)
-        if fitness(current_best) < fitness(best_individual):
-            best_individual = current_best
+        current_fitness = fitness(current_best)
+        
+        # Check for improvement
+        if current_fitness < best_fitness:
+            if best_fitness - current_fitness > threshold:
+                best_individual = current_best
+                best_fitness = current_fitness
+                no_improvement_count = 0
+            else:
+                no_improvement_count += 1
+        else:
+            no_improvement_count += 1
+
+        # Early stopping condition
+        if no_improvement_count >= patience:
+            print(f"Stopping early at generation {generation} due to lack of significant improvement.")
+            break
     
-    best_individual = two_opt(best_individual)
+    best_individual = two_opt(best_individual)  # Assuming two_opt is defined
     best_individual.append(best_individual[0])  # Close the loop
     return best_individual
 
@@ -273,31 +278,132 @@ def simulated_annealing_algorithm(points, iterations=10000, apply_two_opt_every=
 
     return current_solution + [current_solution[0]]  # ensure to close the loop
 
-# Function to add markers and draw path on the map
-def add_markers_and_path(map_object, points, path, optimized_points=[]):
-    # Add markers to the map
-    for point in points:
-        popup_html = f"<div style='color: black; font-size: 12px;'>{point}</div>"
-        popup = folium.Popup(popup_html, max_width=300)  # Black color for general points
-        folium.Marker(
-            location=[point[0], point[1]],
-            popup=popup,
-            icon=folium.Icon(color='blue', icon='info-sign')
-        ).add_to(map_object)
-    
-    # Highlight optimized points in a different color
-    for point in optimized_points:
-        popup_html = f"<div style='color: darkgreen; font-size: 12px;'>{point}</div>"  # Dark green color for optimized points
-        popup = folium.Popup(popup_html, max_width=300)
-        folium.Marker(
-            location=[point[0], point[1]],
-            popup=popup,
-            icon=folium.Icon(color='green', icon='ok-sign')
-        ).add_to(map_object)
+def ant_colony_optimization(points, num_ants=20, num_generations=100, decay=0.5, alpha=1, beta=2):
+    def distance(point1, point2):
+        return geodesic(point1, point2).kilometers
 
+    def update_pheromone(pheromone, candidates, decay):
+        for i in range(len(pheromone)):
+            for j in range(len(pheromone)):
+                pheromone[i][j] *= decay  # decay pheromones
+                for ant in candidates:
+                    pheromone[i][j] += ant['pheromone_delta'][i][j]
+
+    # Initialize pheromones
+    num_points = len(points)
+    pheromone = [[1 / (num_points * num_points) for _ in range(num_points)] for _ in range(num_points)]
+    best_solution = None
+    best_distance = float('inf')
+
+    for _ in range(num_generations):
+        candidates = []
+        for _ in range(num_ants):
+            path = []
+            visited = set()
+            current = random.randint(0, num_points - 1)
+            path.append(current)
+            visited.add(current)
+
+            while len(visited) < num_points:
+                probabilities = []
+                for j in range(num_points):
+                    if j not in visited:
+                        formula = (pheromone[current][j]**alpha) * ((1.0 / distance(points[current], points[j]))**beta)
+                        probabilities.append(formula)
+                    else:
+                        probabilities.append(0)
+
+                next_city = np.random.choice(range(num_points), p=np.array(probabilities)/np.sum(probabilities))
+                path.append(next_city)
+                visited.add(next_city)
+                current = next_city
+
+            path.append(path[0])  # Complete the tour
+            candidate_distance = sum(distance(points[path[i]], points[path[i + 1]]) for i in range(len(path) - 1))
+
+            if candidate_distance < best_distance:
+                best_distance = candidate_distance
+                best_solution = path
+
+            # Calculate pheromone delta for this candidate
+            pheromone_delta = [[0 for _ in range(num_points)] for _ in range(num_points)]
+            for i in range(len(path) - 1):
+                pheromone_delta[path[i]][path[i + 1]] += 1 / candidate_distance
+
+            candidates.append({'path': path, 'distance': candidate_distance, 'pheromone_delta': pheromone_delta})
+
+        update_pheromone(pheromone, candidates, decay)
+
+    # Convert indices back to coordinates
+    best_route = [points[index] for index in best_solution]
+    return best_route
+
+def christofides_algorithm(points):
+    G = nx.complete_graph(len(points))
+    pos = dict(enumerate(points))
+    nx.set_node_attributes(G, pos, 'pos')
+    
+    for u, v in combinations(G.nodes, 2):
+        G[u][v]['weight'] = calculate_distance(pos[u], pos[v])
+
+    # Step 1: Create a minimum spanning tree
+    mst = nx.minimum_spanning_tree(G, weight='weight')
+
+    # Step 2: Find vertices of odd degree
+    odd_degree_nodes = [v for v, degree in mst.degree() if degree % 2 != 0]
+
+    # Subgraph on odd degree vertices
+    odd_subgraph = nx.Graph(G.subgraph(odd_degree_nodes))
+
+    # Minimum weight perfect matching
+    # Note: NetworkX's max_weight_matching finds the maximum weight matching
+    # in the general graph, need to invert weights for minimum weight
+    min_weight_matching = nx.max_weight_matching(odd_subgraph, maxcardinality=True, weight='weight')
+
+    # Step 3: Add matching edges to the MST
+    for u, v in min_weight_matching:
+        if not mst.has_edge(u, v):
+            mst.add_edge(u, v, weight=G[u][v]['weight'])
+
+    # Verify all degrees are even
+    if not all(degree % 2 == 0 for node, degree in mst.degree()):
+        for node, degree in mst.degree():
+            if degree % 2 != 0:
+                print(f"Node {node} still has an odd degree.")
+        raise AssertionError("Graph is not Eulerian as not all nodes have an even degree.")
+
+    # Step 4: Create an Eulerian circuit
+    eulerian_circuit = list(nx.eulerian_circuit(mst))
+
+    # Step 5: Make Hamiltonian circuit, shortcutting visited nodes
+    visited = set()
+    path = []
+    for u, v in eulerian_circuit:
+        if u not in visited:
+            path.append(points[u])
+            visited.add(u)
+        if v not in visited:
+            path.append(points[v])
+            visited.add(v)
+
+    # Add start point to end to make a cycle
+    path.append(path[0])
+
+    return path
+
+
+
+# Function to add markers and draw path on the map
+def add_markers_and_path(map_object, points, path):
+    for point in points:
+        folium.Marker(
+            location=[point[0], point[1]],
+            popup=f'({point[0]}, {point[1]})'
+        ).add_to(map_object)
     # Draw the path if available
     if path:
         folium.PolyLine(path, color='blue', weight=5, opacity=0.7).add_to(map_object)
+
 
 # Streamlit app
 def app():
@@ -348,11 +454,14 @@ def app():
 
     # Checkboxes for TSP algorithms
     tsp_algorithms = {
-        "Nearest Neighbor": nearest_neighbor_algorithm,
-        "Random Sampling": random_sampling_algorithm,
-        "Genetic Algorithm": genetic_algorithm,
-        "Simulated Annealing": simulated_annealing_algorithm
+    "Nearest Neighbor": nearest_neighbor_algorithm,
+    "Random Sampling": random_sampling_algorithm,
+    "Genetic Algorithm": genetic_algorithm,
+    "Simulated Annealing": simulated_annealing_algorithm,
+    "Ant Colony Optimization": ant_colony_optimization,
+    "Christofide's Algorithm": christofides_algorithm
     }
+
     selected_algorithms = st.multiselect("Select TSP Algorithms", list(tsp_algorithms.keys()))
 
     # Button to compute the optimized route
@@ -410,18 +519,32 @@ def app():
             ])
             st.write(route_df)
 
-            # Line plot for execution times
-            st.subheader("Execution Times of TSP Algorithms")
-            execution_df = pd.DataFrame(execution_times.items(), columns=['Algorithm', 'Execution Time (s)'])
-            chart = alt.Chart(execution_df).mark_line(point=True).encode(
-                x='Algorithm',
-                y='Execution Time (s)',
-                tooltip=['Algorithm', 'Execution Time (s)']
-            ).properties(
-                width=600,
-                height=400
-            )
-            st.altair_chart(chart)
+            # Bar graph for execution times
+            if selected_algorithms:
+                # Use pandas DataFrame to create a bar chart
+                execution_time_df = pd.DataFrame(list(execution_times.items()), columns=['Algorithm', 'Execution Time (s)'])
+
+                # Sort the DataFrame by execution time in ascending order
+                sorted_execution_time_df = execution_time_df.sort_values(by='Execution Time (s)', ascending=True)
+
+                st.subheader("Execution Times of TSP Algorithms (Table)")
+                # Display the DataFrame as a table
+                st.dataframe(sorted_execution_time_df.set_index('Algorithm'))
+
+                st.subheader("Execution Times of TSP Algorithms")
+
+                # Create a Matplotlib bar chart
+                fig, ax = plt.subplots()
+                ax.bar(sorted_execution_time_df['Algorithm'], sorted_execution_time_df['Execution Time (s)'])
+                ax.set_xlabel('Algorithm')
+                ax.set_ylabel('Execution Time (s)')
+                ax.set_title('Execution Times of TSP Algorithms')
+                plt.xticks(rotation=45, ha='right')
+
+                # Show the plot in Streamlit
+                st.pyplot(fig)
+
+
 
             # Distance matrices
             st.subheader("Distance Matrices")
@@ -451,9 +574,9 @@ def calculate_zoom(min_lat, max_lat, min_lon, max_lon):
     if lat_difference == 0 and lon_difference == 0:
         zoom_level = 14
     elif lat_difference > lon_difference:
-        zoom_level = round(log(360 * 0.3 / lat_difference) / log(2))
+        zoom_level = round(log(360 * 0.3 / lat_difference) / log(2)) + 3
     else:
-        zoom_level = round(log(360 * 0.3 / lon_difference) / log(2))
+        zoom_level = round(log(360 * 0.3 / lon_difference) / log(2)) + 3
     return zoom_level
 
 if __name__ == "__main__":
