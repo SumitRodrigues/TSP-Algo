@@ -21,10 +21,11 @@ To run this application, you will need Python installed on your system, along wi
 1. Clone the repository:
    
    git clone https://github.com/SumitRodrigues/TSP-Algo.git
+   
    cd TSP-Algo
 
 
-2. Install the required packages:
+3. Install the required packages:
    ```bash
    pip install streamlit folium numpy pandas geopy
    ```
