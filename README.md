@@ -59,6 +59,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Contact
 
-Your Name - your.email@example.com
+Your Name - sumitrod11@gmail.com
 
-Project Link: [https://github.com/yourusername/your-repository-name](https://github.com/yourusername/your-repository-name)
+Project Link: https://github.com/SumitRodrigues/TSP-Algo.git
