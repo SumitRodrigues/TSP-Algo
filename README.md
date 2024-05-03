@@ -35,7 +35,7 @@ To run this application, you will need Python installed on your system, along wi
 To run the application, navigate to the project directory and run the following command:
 
 ```bash
-streamlit run app.py
+streamlit run TSP.py
 ```
 
 This will start the Streamlit application and open it in your default web browser.
