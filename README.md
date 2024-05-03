@@ -42,10 +42,17 @@ This will start the Streamlit application and open it in your default web browse
 
 ## Algorithms
 
-- **Nearest Neighbor**: A simple heuristic that selects the nearest unvisited city.
-- **Random Sampling**: Evaluates random permutations of the cities and selects the path with the shortest distance.
-- **Genetic Algorithm**: Uses genetic algorithm concepts like selection, crossover, and mutation to find an efficient route.
-- **Simulated Annealing**: Simulates annealing process to escape local minima and find better solutions over time.
+This application includes a range of algorithms to solve the Traveling Salesperson Problem (TSP), each with unique approaches and benefits:
+
+- **Nearest Neighbor**: A simple heuristic that selects the nearest unvisited city, providing a quick but potentially suboptimal path.
+- **Random Sampling**: Evaluates random permutations of the cities and selects the path with the shortest distance, offering a straightforward stochastic approach.
+- **Genetic Algorithm**: Applies principles of natural selection, including crossover and mutation, to evolve solutions towards better routes.
+- **Simulated Annealing**: Uses the concept of annealing in metallurgy to escape local minima and find better solutions over time by gradually reducing the "temperature" of the solution space.
+- **Christofides' Algorithm**: An approximation algorithm that guarantees to come within a factor of 1.5 of the optimal length, best used for symmetric TSP where the distances comply with the triangle inequality.
+- **Ant Colony Optimization**: A probabilistic technique inspired by the behavior of ants seeking paths between their colony and food source, using pheromone trails to find shorter paths over time.
+
+These algorithms offer a blend of exact, approximate, and heuristic methods, allowing users to compare performance and effectiveness across different approaches.
+
 
 ## Customization
 
