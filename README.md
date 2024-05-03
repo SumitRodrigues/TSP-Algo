@@ -18,7 +18,7 @@ This Streamlit application visualizes and computes optimized routes using the Tr
 To run this application, you will need Python installed on your system, along with several libraries. Here's how you can set it up:
 
 1. Clone the repository:
-   ```bash
+   
    git clone https://github.com/yourusername/your-repository-name.git
    cd your-repository-name
    ```
